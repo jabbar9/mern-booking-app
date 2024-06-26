@@ -4,6 +4,8 @@ import TypeSection from "./TypeSection";
 import FacilitiesSection from "./FacilitiesSection";
 import GuestsSection from "./GuestsSection";
 import ImagesSection from "./ImagesSection";
+import { HotelType } from "../../../../backend/src/shared/types";
+import { useEffect } from "react";
 
 export type HotelFormData = {
   name: string;
@@ -15,22 +17,31 @@ export type HotelFormData = {
   starRating: number;
   facilities: string[];
   imageFiles: FileList;
+  imageUrls: string[];
   adultCount: number;
   childCount: number;
 };
 
 type Props = {
-    onSave: (hotelFormData: FormData) => void;
-    isLoading: boolean;
-}
+  hotel?: HotelType;
+  onSave: (hotelFormData: FormData) => void;
+  isLoading: boolean;
+};
 
-const ManageHotelForm = ({ onSave, isLoading }: Props) => {
+const ManageHotelForm = ({ onSave, isLoading, hotel }: Props) => {
   const formMethods = useForm<HotelFormData>();
-  const { handleSubmit } = formMethods;
+  const { handleSubmit, reset } = formMethods;
+
+  useEffect(() => {
+    reset(hotel);
+  }, [hotel, reset]);
 
   const onSubmit = handleSubmit((formDataJson: HotelFormData) => {
     //Create new form Data object & call our API
     const formData = new FormData();
+    if(hotel){
+      formData.append("hotelId", hotel._id);
+    }
     formData.append("name", formDataJson.name);
     formData.append("city", formDataJson.city);
     formData.append("country", formDataJson.country);
@@ -41,16 +52,24 @@ const ManageHotelForm = ({ onSave, isLoading }: Props) => {
     formData.append("adultCount", formDataJson.adultCount.toString());
     formData.append("childCount", formDataJson.childCount.toString());
 
-    formDataJson.facilities.forEach((facility,index) => {
-        formData.append(`facilities[${index}]`,facility)
+    formDataJson.facilities.forEach((facility, index) => {
+      formData.append(`facilities[${index}]`, facility);
     });
 
-    Array.from(formDataJson.imageFiles).forEach(((imageFile) => {
-        formData.append("imageFiles", imageFile);
-    }));
+    //[image1.jpg,image2.jpg,image3.jpg]
+    //imageUrls = [image1.jpg]
+    if(formDataJson.imageUrls){
+      formDataJson.imageUrls.forEach((url, index) => {
+        formData.append(`imageUrls[${index}]`, url);
+      })
+    }
+
+    Array.from(formDataJson.imageFiles).forEach((imageFile) => {
+      formData.append("imageFiles", imageFile);
+    });
 
     onSave(formData);
-  })
+  });
   return (
     <FormProvider {...formMethods}>
       <form className="flex flex-col gap-10" onSubmit={onSubmit}>
@@ -63,7 +82,8 @@ const ManageHotelForm = ({ onSave, isLoading }: Props) => {
           <button
             disabled={isLoading}
             type="submit"
-            className="bg-blue-600 text-white p-2 font-bold hover:bg-blue-500 text-xl disabled:bg-gray-500">
+            className="bg-blue-600 text-white p-2 font-bold hover:bg-blue-500 text-xl disabled:bg-gray-500"
+          >
             {isLoading ? "Saving..." : "Save"}
           </button>
         </span>
