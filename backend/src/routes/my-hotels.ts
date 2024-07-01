@@ -43,6 +43,8 @@ router.post(
 
       //1. Upload the Images to Cloud
       const imageURLs = await uploadImages(imageFiles);
+
+      
       newHotel.imageUrls = imageURLs;
       newHotel.lastUpdated = new Date();
       newHotel.userId = req.userId;
@@ -55,7 +57,7 @@ router.post(
       res.status(201).send(hotel);
     } catch (e) {
       console.log("Error Creating Hotel:", e);
-      res.send(500).json({ message: "Something Went Wrong" });
+      res.status(500).json({ message: "Something Went Wrong" });
     }
   }
 );
